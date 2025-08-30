@@ -1,0 +1,600 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+// Geospatial libs
+import { MapContainer, TileLayer, FeatureGroup, WMSTileLayer, useMap, useMapEvents } from "react-leaflet";
+import { EditControl } from "react-leaflet-draw";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
+
+// ---- Color palette & typography (Tailwind classes) ----
+// Palette inspiration: deep-sea gradients + coral accents
+// primary: deep navy #0B1B2B, secondary: teal #0FA3B1, accent: coral #FF6F61, sand #F7E8D5, foam #E5F6F8
+// Font pairing suggestion (configure in your real app): Headings: "Inter" or "DM Sans"; Body: "Source Sans 3".
+
+export default function ConferencePortal() {
+  // --- App State ---
+  const [lang, setLang] = useState("en");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [registrations, setRegistrations] = useState(() => JSON.parse(localStorage.getItem("registrations")||"[]"));
+  const [chatMessages, setChatMessages] = useState([{ role: "system", text: "Welcome! Ask me about registration, travel, or agenda." }]);
+  const [pendingSubmissions, setPendingSubmissions] = useState(() => JSON.parse(localStorage.getItem("offlineReports")||"[]"));
+  const [wmsUrl, setWmsUrl] = useState("");
+  const [wmsLayerName, setWmsLayerName] = useState("");
+  const [polygons, setPolygons] = useState([]); // GeoJSON-like arrays of latlngs
+
+  useEffect(() => {
+    localStorage.setItem("registrations", JSON.stringify(registrations));
+  }, [registrations]);
+
+  useEffect(() => {
+    localStorage.setItem("offlineReports", JSON.stringify(pendingSubmissions));
+  }, [pendingSubmissions]);
+
+  const t = useMemo(() => translations[lang] || translations.en, [lang]);
+
+  // --- Handlers ---
+  function handleRegister(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.currentTarget));
+    setRegistrations(prev => [...prev, { ...data, time: new Date().toISOString() }]);
+    e.currentTarget.reset();
+    alert(t.register.success);
+  }
+
+  function handlePay() {
+    // Placeholder: integrate Stripe Checkout / PayPal smart buttons here.
+    alert(t.payment.placeholder);
+  }
+
+  function sendChat(e) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const msg = (fd.get("msg")||"").toString().trim();
+    if(!msg) return;
+    setChatMessages(m => [...m, { role: "user", text: msg }]);
+    e.currentTarget.reset();
+    // Simple on-device FAQ-like replies (replace with real backend/LLM endpoint)
+    const reply = getCannedReply(msg.toLowerCase(), t);
+    setTimeout(() => setChatMessages(m => [...m, { role: "assistant", text: reply }]), 300);
+  }
+
+  function onCrowdSubmit(e){
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const payload = Object.fromEntries(fd.entries());
+    payload.time = new Date().toISOString();
+    // Simulate offline-first queue
+    setPendingSubmissions(arr => [...arr, payload]);
+    e.currentTarget.reset();
+    alert(t.crowd.thanks);
+  }
+
+  function syncReports(){
+    // Replace with fetch to your backend API when online
+    const count = pendingSubmissions.length;
+    setPendingSubmissions([]);
+    alert(`${t.crowd.synced} ${count}`);
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0B1B2B] via-[#0B1B2B] to-[#0E2A3F] text-slate-100">
+      {/* Header */}
+      <header className="sticky top-0 z-40 backdrop-blur bg-[#0B1B2B]/70 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <a href="#home" className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 rounded-full bg-[#0FA3B1]"></span>
+            <span className="font-semibold tracking-wide">F.O.L.I.O. Conference</span>
+          </a>
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            <a className="hover:text-[#0FA3B1]" href="#about">{t.nav.about}</a>
+            <a className="hover:text-[#0FA3B1]" href="#program">{t.nav.program}</a>
+            <a className="hover:text-[#0FA3B1]" href="#map">{t.nav.map}</a>
+            <a className="hover:text-[#0FA3B1]" href="#crowd">{t.nav.crowd}</a>
+            <a className="hover:text-[#0FA3B1]" href="#register">{t.nav.register}</a>
+            <a className="hover:text-[#0FA3B1]" href="#chat">{t.nav.chat}</a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <select aria-label={t.a11y.language} value={lang} onChange={(e)=>setLang(e.target.value)} className="bg-[#0E2A3F] border border-white/10 rounded-xl px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA3B1]">
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="fr">FR</option>
+              <option value="ar">AR</option>
+            </select>
+            <button onClick={()=>setMenuOpen(v=>!v)} className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 hover:bg-white/5" aria-label={t.a11y.menu}>
+              <span className="sr-only">Menu</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        {menuOpen && (
+          <div className="md:hidden border-t border-white/10 px-4 pb-3">
+            <div className="flex flex-col gap-2 py-2">
+              {[
+                {href:'#about',label:t.nav.about},
+                {href:'#program',label:t.nav.program},
+                {href:'#map',label:t.nav.map},
+                {href:'#crowd',label:t.nav.crowd},
+                {href:'#register',label:t.nav.register},
+                {href:'#chat',label:t.nav.chat},
+              ].map(i=> (
+                <a key={i.href} href={i.href} onClick={()=>setMenuOpen(false)} className="px-2 py-2 rounded-xl hover:bg-white/5">{i.label}</a>
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Hero */}
+      <section id="home" className="relative overflow-hidden">
+        <div className="absolute inset-0 opacity-30" aria-hidden="true">
+          <div className="absolute -top-20 -left-32 w-[40rem] h-[40rem] rounded-full bg-[#0FA3B1] blur-[120px]"></div>
+          <div className="absolute -bottom-20 -right-32 w-[40rem] h-[40rem] rounded-full bg-[#FF6F61] blur-[120px]"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
+            {t.hero.title}
+          </h1>
+          <p className="mt-4 max-w-2xl text-slate-200">
+            {t.hero.subtitle}
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#register" className="inline-flex items-center gap-2 bg-[#FF6F61] hover:bg-[#ff5a48] text-white px-5 py-3 rounded-2xl shadow">
+              <span>{t.cta.register}</span>
+            </a>
+            <a href="#map" className="inline-flex items-center gap-2 bg-[#0FA3B1] hover:bg-[#0d91a0] text-white px-5 py-3 rounded-2xl shadow">
+              <span>{t.cta.exploreMap}</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section id="about" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.about.heading}</h2>
+            <p className="text-slate-200">{t.about.body1}</p>
+            <p className="text-slate-200 mt-3">{t.about.body2}</p>
+            <ul className="mt-4 space-y-2 text-slate-200 list-disc list-inside">
+              <li>{t.about.b1}</li>
+              <li>{t.about.b2}</li>
+              <li>{t.about.b3}</li>
+            </ul>
+          </div>
+          <div className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h3 className="font-semibold mb-2">{t.tasks.title}</h3>
+            <ul className="space-y-2 text-slate-200 list-disc list-inside">
+              {t.tasks.items.map((x,i)=>(<li key={i}>{x}</li>))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Program (placeholder, editable) */}
+      <section id="program" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6">{t.program.title}</h2>
+        <div className="grid md:grid-cols-3 gap-5">
+          {[t.program.day1, t.program.day2, t.program.day3].map((day, idx)=> (
+            <div key={idx} className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+              <h3 className="font-semibold">{day.title}</h3>
+              <ul className="mt-3 space-y-2 text-slate-200">
+                {day.sessions.map((s,i)=>(<li key={i} className="flex items-start gap-2"><span className="text-xs opacity-70 mt-1">{s.time}</span><span>{s.title}</span></li>))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Geospatial Map */}
+      <section id="map" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.map.title}</h2>
+        <p className="text-slate-200 mb-4">{t.map.subtitle}</p>
+        <div className="grid lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 bg-[#0E2A3F] border border-white/10 rounded-2xl overflow-hidden">
+            <GeoMap polygons={polygons} setPolygons={setPolygons} />
+          </div>
+          <div className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h3 className="font-semibold mb-2">{t.map.controls}</h3>
+            <label className="block text-sm mb-1">WMS URL</label>
+            <input value={wmsUrl} onChange={e=>setWmsUrl(e.target.value)} placeholder="https://example.com/wms" className="w-full mb-3 px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+            <label className="block text-sm mb-1">Layer name</label>
+            <input value={wmsLayerName} onChange={e=>setWmsLayerName(e.target.value)} placeholder="NDVI, LAI, etc." className="w-full mb-3 px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+            <p className="text-xs text-slate-300 mb-2">{t.map.help}</p>
+            <RasterPreview url={wmsUrl} layer={wmsLayerName} />
+            <hr className="my-4 border-white/10"/>
+            <button onClick={()=>navigator.geolocation.getCurrentPosition(({coords})=>alert(`${t.map.geolocated} ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`))} className="w-full bg-[#0FA3B1] hover:bg-[#0d91a0] text-white px-4 py-2 rounded-xl">{t.map.locate}</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Crowdsourced Reports */}
+      <section id="crowd" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.crowd.title}</h2>
+        <div className="grid md:grid-cols-2 gap-5">
+          <form onSubmit={onCrowdSubmit} className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <div className="grid gap-3">
+              <div>
+                <label className="block text-sm mb-1" htmlFor="type">{t.crowd.type}</label>
+                <select name="type" id="type" className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10">
+                  <option>{t.crowd.types.sighting}</option>
+                  <option>{t.crowd.types.pollution}</option>
+                  <option>{t.crowd.types.habitat}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="place">{t.crowd.place}</label>
+                <input name="place" id="place" required placeholder="Lagoon, beach, reef…" className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="coords">{t.crowd.coords}</label>
+                <input name="coords" id="coords" placeholder="lat,lng or describe" className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="notes">{t.crowd.notes}</label>
+                <textarea name="notes" id="notes" rows={3} className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <button className="bg-[#FF6F61] hover:bg-[#ff5a48] text-white px-4 py-2 rounded-xl">{t.crowd.submit}</button>
+            </div>
+          </form>
+
+          <div className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h3 className="font-semibold mb-2">{t.crowd.queue}</h3>
+            <ul className="space-y-2 text-slate-200 max-h-64 overflow-auto pr-2">
+              {pendingSubmissions.length===0 && <li className="text-sm opacity-70">{t.crowd.empty}</li>}
+              {pendingSubmissions.map((r,i)=> (
+                <li key={i} className="text-sm bg-white/5 rounded-xl p-3">
+                  <div className="opacity-80">{r.type} — {r.place}</div>
+                  <div className="text-xs opacity-60">{r.time}</div>
+                </li>
+              ))}
+            </ul>
+            <button onClick={syncReports} className="mt-3 w-full bg-[#0FA3B1] hover:bg-[#0d91a0] text-white px-4 py-2 rounded-xl">{t.crowd.sync}</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Registration & Payment */}
+      <section id="register" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <div className="grid md:grid-cols-2 gap-5">
+          <form onSubmit={handleRegister} className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.register.title}</h2>
+            <div className="grid gap-3">
+              <div>
+                <label className="block text-sm mb-1" htmlFor="name">{t.register.name}</label>
+                <input id="name" name="name" required className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="email">{t.register.email}</label>
+                <input id="email" name="email" type="email" required className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="role">{t.register.role}</label>
+                <select id="role" name="role" className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10">
+                  <option>{t.roles.scientist}</option>
+                  <option>{t.roles.phd}</option>
+                  <option>{t.roles.practitioner}</option>
+                  <option>{t.roles.institution}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="country">{t.register.country}</label>
+                <input id="country" name="country" className="w-full px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10"/>
+              </div>
+              <button className="bg-[#0FA3B1] hover:bg-[#0d91a0] text-white px-4 py-2 rounded-xl">{t.register.submit}</button>
+            </div>
+          </form>
+
+          <div className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h3 className="font-semibold mb-2">{t.payment.title}</h3>
+            <p className="text-slate-200 mb-3 text-sm">{t.payment.desc}</p>
+            <div className="grid gap-3">
+              <button onClick={handlePay} className="bg-[#FF6F61] hover:bg-[#ff5a48] text-white px-4 py-2 rounded-xl">{t.payment.payNow}</button>
+              <details className="bg-white/5 rounded-xl p-3">
+                <summary className="cursor-pointer">{t.payment.alt}</summary>
+                <div className="text-sm mt-2 opacity-90">
+                  <div>IBAN: XX00 0000 0000 0000</div>
+                  <div>SWIFT/BIC: ABCDXX</div>
+                  <div>Reference: FOLIO-REG-YourEmail</div>
+                </div>
+              </details>
+              <div className="text-xs opacity-70">{t.payment.note}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Registration list (local only) */}
+        <div className="mt-8 bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+          <h3 className="font-semibold mb-3">{t.register.list}</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left opacity-70">
+                <tr>
+                  <th className="py-2 pr-4">{t.register.name}</th>
+                  <th className="py-2 pr-4">{t.register.email}</th>
+                  <th className="py-2 pr-4">{t.register.role}</th>
+                  <th className="py-2 pr-4">{t.register.country}</th>
+                  <th className="py-2 pr-4">{t.register.time}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registrations.length===0 && (
+                  <tr><td className="py-2 opacity-60" colSpan={5}>{t.register.none}</td></tr>
+                )}
+                {registrations.map((r,i)=> (
+                  <tr key={i} className="border-t border-white/5">
+                    <td className="py-2 pr-4">{r.name}</td>
+                    <td className="py-2 pr-4">{r.email}</td>
+                    <td className="py-2 pr-4">{r.role}</td>
+                    <td className="py-2 pr-4">{r.country}</td>
+                    <td className="py-2 pr-4 text-xs opacity-70">{new Date(r.time).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Chatbot */}
+      <section id="chat" className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <div className="grid md:grid-cols-3 gap-5">
+          <div className="md:col-span-2 bg-[#0E2A3F] border border-white/10 rounded-2xl p-5 flex flex-col">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">{t.chat.title}</h2>
+            <div className="flex-1 rounded-xl bg-[#0B1B2B] border border-white/10 p-3 overflow-auto" aria-live="polite">
+              {chatMessages.map((m,i)=> (
+                <div key={i} className={`my-2 ${m.role==='user' ? 'text-right' : 'text-left'}`}>
+                  <span className={`inline-block px-3 py-2 rounded-2xl ${m.role==='user' ? 'bg-[#0FA3B1]' : 'bg-white/10'}`}>{m.text}</span>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={sendChat} className="mt-3 flex gap-2">
+              <label htmlFor="msg" className="sr-only">{t.chat.input}</label>
+              <input id="msg" name="msg" className="flex-1 px-3 py-2 rounded-xl bg-[#0B1B2B] border border-white/10" placeholder={t.chat.placeholder}/>
+              <button className="px-4 py-2 rounded-xl bg-[#0FA3B1] hover:bg-[#0d91a0]">{t.chat.send}</button>
+            </form>
+          </div>
+          <aside className="bg-[#0E2A3F] border border-white/10 rounded-2xl p-5">
+            <h3 className="font-semibold mb-2">{t.chat.quick}</h3>
+            <ul className="space-y-2 text-sm">
+              {[t.faq.registration, t.faq.payment, t.faq.map, t.faq.support].map((q,i)=> (
+                <li key={i}><button onClick={()=>setChatMessages(m=>[...m,{role:'user',text:q},{role:'assistant',text:getCannedReply(q.toLowerCase(), t)}])} className="w-full text-left bg-white/5 hover:bg-white/10 rounded-xl px-3 py-2">{q}</button></li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 py-8 text-sm text-slate-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div>© {new Date().getFullYear()} Fostering Ocean Literacy International (F.O.L.I.O.).</div>
+          <div className="opacity-80">{t.footer}</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ---- Map Components ----
+function GeoMap({ polygons, setPolygons }){
+  const fgRef = useRef();
+  const [showWms, setShowWms] = useState(true);
+
+  return (
+    <div className="h-[26rem]">
+      <MapContainer center={[0,0]} zoom={2} className="h-full w-full">
+        <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {showWms && (
+          // Example public WMS (replace as needed)
+          <WMSTileLayer url="https://ahocevar.com/geoserver/wms" params={{ layers: "topp:states" }} transparent />
+        )}
+        <FeatureGroup ref={fgRef}>
+          <EditControl
+            position="topright"
+            onCreated={(e)=>{
+              if(e.layer && e.layer.getLatLngs){
+                const latlngs = e.layer.getLatLngs()[0]?.map(ll=>[ll.lat, ll.lng]) || [];
+                setPolygons(prev => [...prev, latlngs]);
+              }
+            }}
+            onDeleted={(e)=>{
+              setPolygons([]);
+            }}
+            draw={{ polyline: false, rectangle: false, circle: false, circlemarker: false, marker: false }}
+          />
+        </FeatureGroup>
+        <LocateButton />
+      </MapContainer>
+    </div>
+  );
+}
+
+function LocateButton(){
+  const map = useMap();
+  return (
+    <button
+      onClick={()=> navigator.geolocation.getCurrentPosition(({coords})=> map.setView([coords.latitude, coords.longitude], 12))}
+      className="absolute z-[1000] bottom-3 left-3 bg-white/90 text-slate-900 px-3 py-1 rounded-lg shadow"
+    >📍 Locate me</button>
+  );
+}
+
+function RasterPreview({ url, layer }){
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <button onClick={()=>setShow(s=>!s)} className="w-full bg-white/5 hover:bg-white/10 rounded-xl px-3 py-2 text-sm">{show? 'Hide' : 'Show'} {layer || 'Raster'}
+      </button>
+      {show && url && layer && (
+        <div className="mt-3 h-40 rounded-xl overflow-hidden">
+          <MapContainer center={[20,0]} zoom={2} className="h-full w-full">
+            <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <WMSTileLayer url={url} params={{ layers: layer }} transparent />
+          </MapContainer>
+        </div>
+      )}
+      {!url && <p className="text-xs opacity-70 mt-2">Paste your WMS endpoint and layer name to preview.</p>}
+    </div>
+  );
+}
+
+// ---- i18n ----
+const translations = {
+  en: {
+    nav: { about: "About", program: "Program", map: "Map", crowd: "Crowd Data", register: "Register", chat: "Chat" },
+    a11y: { language: "Language selector", menu: "Open menu" },
+    hero: {
+      title: "Fostering ocean literacy through informal marine education programs",
+      subtitle: "A responsive, accessible, and geospatially interactive portal for scientists, PhD students, practitioners, and institutions.",
+    },
+    cta: { register: "Register now", exploreMap: "Explore the map" },
+    about: {
+      heading: "Purpose",
+      body1: "The conference accelerates ocean literacy by connecting research, education, and communities through informal learning.",
+      body2: "We prioritize inclusive access: multilingual UI, rural usability, low-bandwidth performance, and mobile-first design.",
+      b1: "Responsive web + cross-platform app",
+      b2: "Accessibility (WCAG 2.2 AA)",
+      b3: "Geospatial tools and offline-first reporting",
+    },
+    tasks: {
+      title: "Front-End Lead — Tasks & Responsibilities",
+      items: [
+        "Build React/React-Native interfaces and optimize for low-end Android.",
+        "Implement multilingual and WCAG-compliant components.",
+        "Integrate maps: drawing, geolocation, raster overlays (NDVI/LAI).",
+        "Design crowdsourced data flows with offline queueing.",
+        "Develop registration, payment, and chatbot UI.",
+        "Translate Figma designs into maintainable code.",
+      ],
+    },
+    program: {
+      title: "Program Snapshot",
+      day1: { title: "Day 1 — Literacy Foundations", sessions: [ {time:"09:00", title:"Keynote: Ocean Literacy in Action"}, {time:"11:00", title:"Informal Education Labs"}, {time:"14:00", title:"Citizen Science Showcases"} ]},
+      day2: { title: "Day 2 — Geospatial & Data", sessions: [ {time:"09:00", title:"Mapping Coastal Change"}, {time:"11:00", title:"NDVI/LAI for Marine Vegetation"}, {time:"14:00", title:"Open Tools & Standards"} ]},
+      day3: { title: "Day 3 — Policy & Practice", sessions: [ {time:"09:00", title:"Education-Policy Bridges"}, {time:"11:00", title:"Community Partnerships"}, {time:"14:00", title:"Next Steps & Funding"} ]},
+    },
+    map: {
+      title: "Interactive Geospatial Tools",
+      subtitle: "Draw marine areas, preview WMS rasters (e.g., NDVI/LAI), and geolocate.",
+      controls: "Raster Overlay Preview",
+      help: "Supports standard WMS endpoints; consult your data provider for parameters.",
+      geolocated: "Centered to:",
+      locate: "Geolocate",
+    },
+    crowd: {
+      title: "Crowdsourced Marine Observations",
+      type: "Report type",
+      types: { sighting: "Species sighting", pollution: "Pollution event", habitat: "Habitat note" },
+      place: "Place / area name",
+      coords: "Coordinates (optional)",
+      notes: "Notes (optional)",
+      submit: "Save report (offline)",
+      queue: "Offline queue",
+      empty: "No reports saved locally yet.",
+      sync: "Sync to server (demo)",
+      thanks: "Thank you! Your report is saved locally and will sync when you press Sync.",
+      synced: "Synced items:",
+    },
+    register: {
+      title: "Registration",
+      name: "Full name",
+      email: "Email",
+      role: "Role",
+      country: "Country",
+      submit: "Register",
+      success: "Thanks! Your registration was saved locally (demo).",
+      list: "Local demo — recent registrations",
+      none: "No registrations yet.",
+      time: "Time",
+    },
+    roles: { scientist: "Scientist", phd: "PhD Student", practitioner: "Practitioner", institution: "Institutional" },
+    payment: {
+      title: "Payment",
+      desc: "Secure online payment (Stripe/PayPal) or bank transfer. This demo uses a placeholder action.",
+      payNow: "Pay now (demo)",
+      alt: "Bank transfer details",
+      note: "After integration, replace with your live payment gateway.",
+      placeholder: "Demo: integrate Stripe Checkout session here.",
+    },
+    chat: {
+      title: "Conference Assistant",
+      input: "Type a message",
+      placeholder: "Ask about fees, travel, or agenda…",
+      send: "Send",
+      quick: "Quick questions",
+    },
+    faq: {
+      registration: "How do I register?",
+      payment: "What payment options exist?",
+      map: "How do I add NDVI/LAI layers?",
+      support: "How can I contact support?",
+    },
+    footer: "Built with accessibility, multilingual support, and offline-first UX.",
+  },
+  es: {
+    nav: { about: "Acerca", program: "Programa", map: "Mapa", crowd: "Datos", register: "Registro", chat: "Chat" },
+    a11y: { language: "Selector de idioma", menu: "Abrir menú" },
+    hero: { title: "Fomentar la alfabetización oceánica…", subtitle: "Portal accesible y geoespacial para ciencia y práctica." },
+    cta: { register: "Inscribirse", exploreMap: "Explorar mapa" },
+    about: { heading: "Propósito", body1: "Conectamos investigación y educación.", body2: "Acceso inclusivo y móvil.", b1:"Web + app", b2:"Accesibilidad", b3:"Mapas y modo offline" },
+    tasks: { title: "Tareas y responsabilidades", items: ["Interfaces React","Multilingüe y WCAG","Mapas y ráster","Datos colaborativos offline","Registro, pago y chatbot","De Figma a código"] },
+    program: { title: "Programa", day1:{title:"Día 1", sessions:[{time:"09:00", title:"Keynote"},{time:"11:00", title:"Laboratorios"},{time:"14:00", title:"Ciencia ciudadana"}]}, day2:{title:"Día 2", sessions:[{time:"09:00", title:"Mapeo costero"},{time:"11:00", title:"NDVI/LAI"},{time:"14:00", title:"Herramientas abiertas"}]}, day3:{title:"Día 3", sessions:[{time:"09:00", title:"Puentes política"},{time:"11:00", title:"Alianzas"},{time:"14:00", title:"Siguientes pasos"}]} },
+    map: { title: "Herramientas geoespaciales", subtitle:"Dibuja áreas y añade WMS.", controls:"Vista ráster", help:"Usa WMS estándar.", geolocated:"Centrado:", locate:"Geolocalizar" },
+    crowd: { title:"Observaciones colaborativas", type:"Tipo", types:{sighting:"Avistamiento",pollution:"Contaminación", habitat:"Hábitat"}, place:"Lugar", coords:"Coordenadas", notes:"Notas", submit:"Guardar (offline)", queue:"Cola offline", empty:"Sin reportes", sync:"Sincronizar", thanks:"¡Gracias!", synced:"Sincronizados:" },
+    register: { title:"Registro", name:"Nombre", email:"Correo", role:"Rol", country:"País", submit:"Registrar", success:"Guardado (demo).", list:"Demo — registros", none:"Sin registros", time:"Hora" },
+    roles: { scientist:"Científico", phd:"Doctorando", practitioner:"Profesional", institution:"Institución" },
+    payment: { title:"Pago", desc:"Pago seguro o transferencia.", payNow:"Pagar (demo)", alt:"Transferencia bancaria", note:"Reemplazar por pasarela.", placeholder:"Demo de pago." },
+    chat: { title:"Asistente", input:"Mensaje", placeholder:"Pregunte…", send:"Enviar", quick:"Preguntas rápidas" },
+    faq: { registration:"¿Cómo me registro?", payment:"¿Pagos?", map:"¿NDVI/LAI?", support:"¿Soporte?" },
+    footer: "Accesibilidad y multilingüe.",
+  },
+  fr: {
+    nav: { about: "À propos", program: "Programme", map: "Carte", crowd: "Données", register: "Inscription", chat: "Chat" },
+    a11y: { language: "Choisir la langue", menu: "Ouvrir le menu" },
+    hero: { title: "Promouvoir la culture océanique…", subtitle: "Portail accessible et géospatial." },
+    cta: { register: "S'inscrire", exploreMap: "Explorer la carte" },
+    about: { heading: "Objectif", body1: "Relier recherche et éducation.", body2: "Accès inclusif et mobile.", b1:"Web + app", b2:"Accessibilité", b3:"Cartes et hors-ligne" },
+    tasks: { title: "Tâches & responsabilités", items:["Interfaces React","Multilingue et WCAG","Cartes / raster","Données participatives","Inscription, paiement, chatbot","De Figma au code"] },
+    program: { title:"Programme", day1:{title:"Jour 1", sessions:[{time:"09:00", title:"Plénière"},{time:"11:00", title:"Ateliers"},{time:"14:00", title:"Science citoyenne"}]}, day2:{title:"Jour 2", sessions:[{time:"09:00", title:"Changements côtiers"},{time:"11:00", title:"NDVI/LAI"},{time:"14:00", title:"Outils ouverts"}]}, day3:{title:"Jour 3", sessions:[{time:"09:00", title:"Politiques"},{time:"11:00", title:"Partenariats"},{time:"14:00", title:"Suite"}]} },
+    map: { title:"Outils géospatiaux", subtitle:"Dessiner et prévisualiser WMS.", controls:"Surcouche raster", help:"WMS standard.", geolocated:"Centré:", locate:"Se localiser" },
+    crowd: { title:"Signalements participatifs", type:"Type", types:{sighting:"Observation",pollution:"Pollution", habitat:"Habitat"}, place:"Lieu", coords:"Coordonnées", notes:"Notes", submit:"Enregistrer (hors-ligne)", queue:"File hors-ligne", empty:"Aucun signalement", sync:"Synchroniser", thanks:"Merci !", synced:"Synchronisés :" },
+    register: { title:"Inscription", name:"Nom", email:"E‑mail", role:"Rôle", country:"Pays", submit:"Valider", success:"Enregistré (démo).", list:"Démo — inscriptions", none:"Aucune inscription", time:"Heure" },
+    roles: { scientist:"Scientifique", phd:"Doctorant", practitioner:"Praticien", institution:"Institution" },
+    payment: { title:"Paiement", desc:"Paiement sécurisé / virement.", payNow:"Payer (démo)", alt:"Virement bancaire", note:"Remplacer par passerelle.", placeholder:"Démo paiement." },
+    chat: { title:"Assistant", input:"Message", placeholder:"Posez votre question…", send:"Envoyer", quick:"Questions rapides" },
+    faq: { registration:"Comment m'inscrire ?", payment:"Options de paiement ?", map:"Ajouter NDVI/LAI ?", support:"Support ?" },
+    footer: "Accessibilité, multilingue, hors-ligne.",
+  },
+  ar: {
+    nav: { about: "حول", program: "البرنامج", map: "الخريطة", crowd: "بيانات", register: "تسجيل", chat: "محادثة" },
+    a11y: { language: "اختيار اللغة", menu: "قائمة" },
+    hero: { title: "تعزيز الثقافة البحرية من خلال التعليم غير الرسمي", subtitle: "بوابة تفاعلية ومتاحة ومتعددة اللغات." },
+    cta: { register: "سجل الآن", exploreMap: "استكشف الخريطة" },
+    about: { heading:"الهدف", body1:"نربط البحث بالتعليم والمجتمع.", body2:"أولوية الوصول الشامل والأداء على الهواتف الضعيفة.", b1:"موقع وتطبيق", b2:"إتاحة الوصول", b3:"أدوات مكانية ووضع غير متصل" },
+    tasks: { title:"المهام والمسؤوليات", items:["واجهات React","تعدد اللغات والمعايير","خرائط وطبقات Raster","بيانات مجتمعية", "التسجيل والدفع والدردشة", "من Figma إلى كود"] },
+    program: { title:"البرنامج", day1:{title:"اليوم 1", sessions:[{time:"09:00", title:"كلمة رئيسية"},{time:"11:00", title:"مختبرات"},{time:"14:00", title:"علم المواطن"}]}, day2:{title:"اليوم 2", sessions:[{time:"09:00", title:"تغير السواحل"},{time:"11:00", title:"NDVI/LAI"},{time:"14:00", title:"أدوات مفتوحة"}]}, day3:{title:"اليوم 3", sessions:[{time:"09:00", title:"السياسات"},{time:"11:00", title:"شراكات"},{time:"14:00", title:"الخطوات القادمة"}]} },
+    map: { title:"أدوات جغرافية", subtitle:"ارسم المناطق وأضف WMS.", controls:"عرض طبقة Raster", help:"يدعم WMS القياسي.", geolocated:"تم التمركز:", locate:"الموقع" },
+    crowd: { title:"ملاحظات مجتمعية", type:"نوع البلاغ", types:{sighting:"مشاهدة نوع", pollution:"تلوث", habitat:"موئل"}, place:"المكان", coords:"إحداثيات", notes:"ملاحظات", submit:"حفظ (دون اتصال)", queue:"قائمة دون اتصال", empty:"لا توجد بلاغات", sync:"مزامنة", thanks:"شكرًا لك!", synced:"تمت مزامنة:" },
+    register: { title:"التسجيل", name:"الاسم", email:"البريد", role:"الدور", country:"الدولة", submit:"إرسال", success:"تم الحفظ (تجريبي).", list:"قائمة محلية — التسجيلات", none:"لا يوجد", time:"الوقت" },
+    roles: { scientist:"عالِم", phd:"طالب دكتوراه", practitioner:"ممارس", institution:"جهة مؤسسية" },
+    payment: { title:"الدفع", desc:"دفع آمن أو حوالة.", payNow:"ادفع الآن (تجريبي)", alt:"تحويل بنكي", note:"استبدل ببوابة دفع.", placeholder:"دفع تجريبي." },
+    chat: { title:"المساعد", input:"أدخل رسالة", placeholder:"اسأل عن الرسوم أو السفر…", send:"إرسال", quick:"أسئلة سريعة" },
+    faq: { registration:"كيفية التسجيل؟", payment:"خيارات الدفع؟", map:"إضافة NDVI/LAI؟", support:"الدعم؟" },
+    footer: "إتاحة، لغات متعددة، وضع دون اتصال.",
+  }
+};
+
+function getCannedReply(q, t){
+  if(q.includes("register" )|| q.includes("inscrib") || q.includes("s'inscr") || q.includes("سجل")){
+    return `${t.register.title}: ${t.register.submit} → ${t.nav.register}.`;
+  }
+  if(q.includes("payment") || q.includes("pagar") || q.includes("paiement") || q.includes("الدفع")){
+    return `${t.payment.title}: ${t.payment.desc}`;
+  }
+  if(q.includes("ndvi") || q.includes("lai") || q.includes("wms")){
+    return `${t.map.controls}: ${t.map.help}`;
+  }
+  if(q.includes("support") || q.includes("soporte") || q.includes("support") || q.includes("دعم")){
+    return `Email: support@folio.example.org — ${t.footer}`;
+  }
+  return "Thanks! A coordinator will reply soon (demo).";
+}
