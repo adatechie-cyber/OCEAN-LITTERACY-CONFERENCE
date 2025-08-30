@@ -87,3 +87,112 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fostering Ocean Literacy Conference</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+  <!-- Hero -->
+  <header class="hero">
+    <h1>Fostering Ocean Literacy</h1>
+    <p>Through Informal Marine Education Programs</p>
+    <p class="date">📅 October 15–17, 2025 | 🌍 Virtual & In-Person</p>
+    <a href="#register" class="btn">Register Now</a>
+  </header>
+
+  <!-- Social bar -->
+  <section class="social">
+    <p>Share this Conference:</p>
+    <a href="https://sharer.kakao.com/talk/friends/picker/link" target="_blank">KakaoTalk</a>
+    <a href="javascript:void(0);" onclick="toggleQR()">WeChat (QR)</a>
+    <a href="http://service.weibo.com/share/share.php?title=Join%20the%20Fostering%20Ocean%20Literacy%20Conference&url=https://yourconferenceurl.com" target="_blank">Weibo</a>
+    <a href="https://line.me/R/msg/text/?Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">LINE</a>
+    <a href="https://twitter.com/intent/tweet?text=Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">Twitter (X)</a>
+    <a href="https://www.unesco.org/" target="_blank">UNESCO</a>
+
+    <!-- QR modal -->
+    <div id="qrModal" class="qr-modal" style="display:none;">
+      <h3>Scan with WeChat</h3>
+      <canvas id="qrCode"></canvas>
+      <button onclick="toggleQR()" class="btn">Close</button>
+    </div>
+  </section>
+
+  <!-- Program -->
+  <section class="program">
+    <h2>Conference Program</h2>
+    <ul>
+      <li><strong>Day 1:</strong> Ocean Literacy Frameworks & Education</li>
+      <li><strong>Day 2:</strong> Informal Marine Education Practices</li>
+      <li><strong>Day 3:</strong> Policy, Partnerships, and Future Pathways</li>
+    </ul>
+  </section>
+
+  <!-- Speakers -->
+  <section class="speakers">
+    <h2>Featured Speakers</h2>
+    <div class="speaker-grid">
+      <div class="speaker">
+        <img src="assets/speaker1.jpg" alt="Speaker 1" />
+        <h3>Dr. Marina Blue</h3>
+        <p>Marine Biologist</p>
+      </div>
+      <div class="speaker">
+        <img src="assets/speaker2.jpg" alt="Speaker 2" />
+        <h3>Prof. Coral Reef</h3>
+        <p>Ocean Educator</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map -->
+  <section class="map">
+    <h2>Explore Conference Venues</h2>
+    <div id="map"></div>
+  </section>
+
+  <!-- Registration -->
+  <section id="register" class="register">
+    <h2>Register & Join</h2>
+    <form>
+      <input type="text" placeholder="Full Name" required />
+      <input type="email" placeholder="Email" required />
+      <button type="submit" class="btn">Submit</button>
+    </form>
+  </section>
+
+  <!-- Contact -->
+  <footer class="contact">
+    <h2>Contact Us</h2>
+    <p>Email: info@oceanliteracyconf.org</p>
+    <p>&copy; 2025 Ocean Literacy Conference</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Map init
+    const map = L.map("map").setView([0,0], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    // QR code toggle
+    const qrModal = document.getElementById("qrModal");
+    const qr = new QRious({
+      element: document.getElementById("qrCode"),
+      value: "https://yourconferenceurl.com",
+      size: 200
+    });
+
+    function toggleQR() {
+      qrModal.style.display = qrModal.style.display === "none" ? "block" : "none";
+    }
+  </script>
+</body>
+</html>
