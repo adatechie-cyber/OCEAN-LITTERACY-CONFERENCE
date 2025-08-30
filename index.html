@@ -1,198 +1,956 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fostering Ocean Literacy Conference</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Conference on Ocean Literacy | Fostering Ocean Literacy Through Informal Education</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700;800&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-blue: #0A2342;
+            --ocean-teal: #2CA58D;
+            --sea-green: #84BC9C;
+            --sand: #F5E5C6;
+            --coral: #FF5E5B;
+            --light-blue: #E8F0F8;
+            --white: #FFFFFF;
+            --gray: #4A4A4A;
+            --light-gray: #F0F3F5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--deep-blue);
+            line-height: 1.6;
+            background-color: var(--white);
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            font-family: 'Source Sans Pro', sans-serif;
+            margin-bottom: 1rem;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--ocean-teal) 100%);
+            color: var(--white);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-left: 10px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-menu li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-menu a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        .nav-menu a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--sand);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-menu a:hover:after {
+            width: 100%;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(10, 35, 66, 0.7), rgba(10, 35, 66, 0.8)), url('https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1888&q=80') no-repeat center center/cover;
+            color: var(--white);
+            padding: 6rem 0;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background-color: var(--coral);
+            color: var(--white);
+            border: 2px solid var(--coral);
+        }
+        
+        .btn-primary:hover {
+            background-color: transparent;
+            color: var(--coral);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--white);
+            border: 2px solid var(--white);
+            margin-left: 1rem;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--white);
+            color: var(--deep-blue);
+        }
+        
+        /* Sections */
+        .section {
+            padding: 5rem 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 3px;
+            background: var(--ocean-teal);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* About Section */
+        .about {
+            background-color: var(--light-blue);
+        }
+        
+        /* Speakers Section */
+        .speakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .speaker-card {
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .speaker-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .speaker-img {
+            height: 250px;
+            overflow: hidden;
+        }
+        
+        .speaker-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .speaker-card:hover .speaker-img img {
+            transform: scale(1.1);
+        }
+        
+        .speaker-info {
+            padding: 1.5rem;
+        }
+        
+        .speaker-name {
+            font-size: 1.3rem;
+            color: var(--deep-blue);
+        }
+        
+        .speaker-title {
+            color: var(--ocean-teal);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Schedule Section */
+        .schedule {
+            background-color: var(--light-blue);
+        }
+        
+        .schedule-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .tab-btn:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .tab-btn.active {
+            background: var(--ocean-teal);
+            color: var(--white);
+        }
+        
+        .schedule-content {
+            display: none;
+        }
+        
+        .schedule-content.active {
+            display: block;
+        }
+        
+        .schedule-item {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .schedule-time {
+            color: var(--ocean-teal);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Registration Section */
+        .registration-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .step-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .step-icon {
+            font-size: 2.5rem;
+            color: var(--ocean-teal);
+            margin-bottom: 1rem;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--deep-blue);
+            color: var(--white);
+            padding: 3rem 0 1rem;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-links a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--coral);
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icons a:hover {
+            background: var(--coral);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: var(--light-gray);
+        }
+        
+        /* Chatbot */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .chatbot-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--ocean-teal);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .chatbot-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .chatbot-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 400px;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chatbot-header {
+            background: var(--deep-blue);
+            color: var(--white);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        .chatbot-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        
+        .bot-message {
+            background: var(--light-blue);
+            align-self: flex-start;
+        }
+        
+        .user-message {
+            background: var(--ocean-teal);
+            color: var(--white);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .chatbot-input {
+            display: flex;
+            padding: 0.5rem;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        .chatbot-input input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .chatbot-input button {
+            background: var(--ocean-teal);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 0.5rem;
+            cursor: pointer;
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .nav-menu {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - 70px);
+                background: var(--deep-blue);
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.5s ease;
+            }
+            
+            .nav-menu.active {
+                left: 0;
+            }
+            
+            .nav-menu li {
+                margin: 1.5rem 0;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                display: block;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .btn-secondary {
+                margin-left: 0;
+            }
+            
+            .section {
+                padding: 3rem 0;
+            }
+            
+            .chatbot-window {
+                width: 300px;
+                right: -20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Hero -->
-  <header class="hero">
-    <h1>Fostering Ocean Literacy</h1>
-    <p>Through Informal Marine Education Programs</p>
-    <p class="date">📅 October 15–17, 2025 | 🌍 Virtual & In-Person</p>
-    <a href="#register" class="btn">Register Now</a>
-  </header>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <i class="fas fa-water fa-2x" style="color: var(--sand);"></i>
+                <span class="logo-text">OceanLiteracy2023</span>
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="#about">About</a></li>
+                <li><a href="#speakers">Speakers</a></li>
+                <li><a href="#schedule">Schedule</a></li>
+                <li><a href="#registration">Registration</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </header>
 
-  <!-- Social bar -->
-  <section class="social">
-    <p>Share this Conference:</p>
-    <a href="https://sharer.kakao.com/talk/friends/picker/link" target="_blank">KakaoTalk</a>
-    <a href="javascript:void(0);" onclick="alert('WeChat sharing works via QR code scan inside WeChat app.');">WeChat</a>
-    <a href="http://service.weibo.com/share/share.php?title=Join%20the%20Fostering%20Ocean%20Literacy%20Conference&url=https://yourconferenceurl.com" target="_blank">Weibo</a>
-    <a href="https://line.me/R/msg/text/?Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">LINE</a>
-    <a href="https://twitter.com/intent/tweet?text=Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">Twitter (X)</a>
-    <a href="https://www.unesco.org/" target="_blank">UNESCO</a>
-  </section>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <h1>Fostering Ocean Literacy Through Informal Marine Education</h1>
+            <p>Join scientists, educators, and practitioners from around the world for the premier conference on ocean literacy and marine education. October 15-17, 2023 | Virtual & On-Site</p>
+            <div class="hero-buttons">
+                <a href="#registration" class="btn btn-primary">Register Now</a>
+                <a href="#schedule" class="btn btn-secondary">View Schedule</a>
+            </div>
+        </div>
+    </section>
 
-  <!-- Program -->
-  <section class="program">
-    <h2>Conference Program</h2>
-    <ul>
-      <li><strong>Day 1:</strong> Ocean Literacy Frameworks & Education</li>
-      <li><strong>Day 2:</strong> Informal Marine Education Practices</li>
-      <li><strong>Day 3:</strong> Policy, Partnerships, and Future Pathways</li>
-    </ul>
-  </section>
+    <!-- About Section -->
+    <section id="about" class="section about">
+        <div class="container">
+            <h2 class="section-title">About the Conference</h2>
+            <p>The International Conference on Fostering Ocean Literacy through Informal Marine Education Programs brings together leading scientists, educators, policymakers, and practitioners to share knowledge, innovative approaches, and best practices in marine education.</p>
+            <p>This year's theme focuses on the critical role of informal education in promoting ocean literacy and fostering stewardship of marine environments. Through keynote presentations, workshops, and networking sessions, participants will explore strategies for engaging diverse audiences in ocean conservation.</p>
+            <p>We are offering both virtual and in-person participation options to ensure broad accessibility for our international community of ocean advocates and educators.</p>
+        </div>
+    </section>
 
-  <!-- Speakers -->
-  <section class="speakers">
-    <h2>Featured Speakers</h2>
-    <div class="speaker-grid">
-      <div class="speaker">
-        <img src="assets/speaker1.jpg" alt="Speaker 1" />
-        <h3>Dr. Marina Blue</h3>
-        <p>Marine Biologist</p>
-      </div>
-      <div class="speaker">
-        <img src="assets/speaker2.jpg" alt="Speaker 2" />
-        <h3>Prof. Coral Reef</h3>
-        <p>Ocean Educator</p>
-      </div>
+    <!-- Speakers Section -->
+    <section id="speakers" class="section">
+        <div class="container">
+            <h2 class="section-title">Featured Speakers</h2>
+            <div class="speakers-grid">
+                <div class="speaker-card">
+                    <div class="speaker-img">
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" alt="Dr. Maria Rodriguez">
+                    </div>
+                    <div class="speaker-info">
+                        <h3 class="speaker-name">Dr. Maria Rodriguez</h3>
+                        <p class="speaker-title">Director, Marine Education Center</p>
+                        <p>Leading expert in informal marine education with over 15 years of experience developing community-based programs.</p>
+                    </div>
+                </div>
+                <div class="speaker-card">
+                    <div class="speaker-img">
+                        <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=699&q=80" alt="Dr. James Chen">
+                    </div>
+                    <div class="speaker-info">
+                        <h3 class="speaker-name">Dr. James Chen</h3>
+                        <p class="speaker-title">Professor of Marine Ecology</p>
+                        <p>Pioneer in citizen science approaches to marine conservation and author of several books on ocean literacy.</p>
+                    </div>
+                </div>
+                <div class="speaker-card">
+                    <div class="speaker-img">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=688&q=80" alt="Dr. Amina Jalloh">
+                    </div>
+                    <div class="speaker-info">
+                        <h3 class="speaker-name">Dr. Amina Jalloh</h3>
+                        <p class="speaker-title">Founder, Ocean Youth Initiative</p>
+                        <p>Social entrepreneur dedicated to engaging underrepresented communities in marine conservation efforts.</p>
+                    </div>
+                </div>
+                <div class="speaker-card">
+                    <div class="speaker-img">
+                        <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" alt="Dr. Robert Kim">
+                    </div>
+                    <div class="speaker-info">
+                        <h3 class="speaker-name">Dr. Robert Kim</h3>
+                        <p class="speaker-title">Senior Marine Policy Advisor</p>
+                        <p>Works at the intersection of science, policy, and education to promote ocean conservation strategies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedule Section -->
+    <section id="schedule" class="section schedule">
+        <div class="container">
+            <h2 class="section-title">Conference Schedule</h2>
+            <div class="schedule-tabs">
+                <button class="tab-btn active" data-day="day1">Day 1</button>
+                <button class="tab-btn" data-day="day2">Day 2</button>
+                <button class="tab-btn" data-day="day3">Day 3</button>
+            </div>
+            <div class="schedule-content active" id="day1">
+                <div class="schedule-item">
+                    <p class="schedule-time">9:00 AM - 10:00 AM</p>
+                    <h3>Opening Keynote: The Future of Ocean Literacy</h3>
+                    <p>Dr. Maria Rodriguez | Main Auditorium</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">10:30 AM - 12:00 PM</p>
+                    <h3>Workshop: Engaging Communities in Marine Conservation</h3>
+                    <p>Workshop Room A</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">1:30 PM - 3:00 PM</p>
+                    <h3>Panel Discussion: Innovative Approaches in Informal Education</h3>
+                    <p>Main Auditorium</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">3:30 PM - 5:00 PM</p>
+                    <h3>Poster Session: Marine Education Programs</h3>
+                    <p>Exhibition Hall</p>
+                </div>
+            </div>
+            <div class="schedule-content" id="day2">
+                <div class="schedule-item">
+                    <p class="schedule-time">9:00 AM - 10:00 AM</p>
+                    <h3>Keynote: Citizen Science in Marine Environments</h3>
+                    <p>Dr. James Chen | Main Auditorium</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">10:30 AM - 12:00 PM</p>
+                    <h3>Parallel Sessions: Case Studies from Around the World</h3>
+                    <p>Various Rooms</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">1:30 PM - 3:00 PM</p>
+                    <h3>Workshop: Digital Tools for Ocean Education</h3>
+                    <p>Technology Lab</p>
+                </div>
+            </div>
+            <div class="schedule-content" id="day3">
+                <div class="schedule-item">
+                    <p class="schedule-time">9:00 AM - 10:30 AM</p>
+                    <h3>Panel: Policy and Education for Ocean Conservation</h3>
+                    <p>Dr. Robert Kim and guests | Main Auditorium</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">11:00 AM - 12:30 PM</p>
+                    <h3>Closing Keynote: Youth Engagement in Marine Issues</h3>
+                    <p>Dr. Amina Jalloh | Main Auditorium</p>
+                </div>
+                <div class="schedule-item">
+                    <p class="schedule-time">2:00 PM - 4:00 PM</p>
+                    <h3>Networking Session and Closing Ceremony</h3>
+                    <p>Grand Ballroom</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Section -->
+    <section id="registration" class="section">
+        <div class="container">
+            <h2 class="section-title">Registration</h2>
+            <p>Register now to secure your spot at the premier ocean literacy conference of the year. Choose between virtual and in-person participation options.</p>
+            <div class="registration-steps">
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3>1. Create Account</h3>
+                    <p>Sign up for a conference account to begin the registration process.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h3>2. Select Ticket Type</h3>
+                    <p>Choose between virtual, in-person, or student registration options.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>3. Payment</h3>
+                    <p>Securely pay online with multiple payment options available.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>4. Confirmation</h3>
+                    <p>Receive immediate confirmation and details for participation.</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="#" class="btn btn-primary">Begin Registration</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="footer-logo">OceanLiteracy2023</div>
+                    <p>Advancing ocean literacy through innovative informal education programs and global collaboration.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#speakers">Speakers</a></li>
+                        <li><a href="#schedule">Schedule</a></li>
+                        <li><a href="#registration">Registration</a></li>
+                        <li><a href="#">Venue Information</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Program Overview</a></li>
+                        <li><a href="#">Presentation Guidelines</a></li>
+                        <li><a href="#">Poster Specifications</a></li>
+                        <li><a href="#">Virtual Platform Guide</a></li>
+                        <li><a href="#">FAQs</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> info@oceanliteracy2023.org</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Ocean Drive, Coastal City, CC 12345</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 International Conference on Ocean Literacy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot -->
+    <div class="chatbot-container">
+        <div class="chatbot-btn">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="chatbot-window">
+            <div class="chatbot-header">
+                <h3>Conference Assistant</h3>
+                <button class="chatbot-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chatbot-messages">
+                <div class="message bot-message">
+                    Hello! How can I help you with the conference today?
+                </div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" placeholder="Type your message here...">
+                <button><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
     </div>
-  </section>
 
-  <!-- Map -->
-  <section class="map">
-    <h2>Explore Conference Venues</h2>
-    <div id="map"></div>
-  </section>
-
-  <!-- Registration -->
-  <section id="register" class="register">
-    <h2>Register & Join</h2>
-    <form>
-      <input type="text" placeholder="Full Name" required />
-      <input type="email" placeholder="Email" required />
-      <button type="submit" class="btn">Submit</button>
-    </form>
-  </section>
-
-  <!-- Contact -->
-  <footer class="contact">
-    <h2>Contact Us</h2>
-    <p>Email: info@oceanliteracyconf.org</p>
-    <p>&copy; 2025 Ocean Literacy Conference</p>
-  </footer>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Map init
-    const map = L.map("map").setView([0,0], 2);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fostering Ocean Literacy Conference</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-</head>
-<body>
-  <!-- Hero -->
-  <header class="hero">
-    <h1>Fostering Ocean Literacy</h1>
-    <p>Through Informal Marine Education Programs</p>
-    <p class="date">📅 October 15–17, 2025 | 🌍 Virtual & In-Person</p>
-    <a href="#register" class="btn">Register Now</a>
-  </header>
-
-  <!-- Social bar -->
-  <section class="social">
-    <p>Share this Conference:</p>
-    <a href="https://sharer.kakao.com/talk/friends/picker/link" target="_blank">KakaoTalk</a>
-    <a href="javascript:void(0);" onclick="toggleQR()">WeChat (QR)</a>
-    <a href="http://service.weibo.com/share/share.php?title=Join%20the%20Fostering%20Ocean%20Literacy%20Conference&url=https://yourconferenceurl.com" target="_blank">Weibo</a>
-    <a href="https://line.me/R/msg/text/?Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">LINE</a>
-    <a href="https://twitter.com/intent/tweet?text=Join%20the%20Fostering%20Ocean%20Literacy%20Conference%20https://yourconferenceurl.com" target="_blank">Twitter (X)</a>
-    <a href="https://www.unesco.org/" target="_blank">UNESCO</a>
-
-    <!-- QR modal -->
-    <div id="qrModal" class="qr-modal" style="display:none;">
-      <h3>Scan with WeChat</h3>
-      <canvas id="qrCode"></canvas>
-      <button onclick="toggleQR()" class="btn">Close</button>
-    </div>
-  </section>
-
-  <!-- Program -->
-  <section class="program">
-    <h2>Conference Program</h2>
-    <ul>
-      <li><strong>Day 1:</strong> Ocean Literacy Frameworks & Education</li>
-      <li><strong>Day 2:</strong> Informal Marine Education Practices</li>
-      <li><strong>Day 3:</strong> Policy, Partnerships, and Future Pathways</li>
-    </ul>
-  </section>
-
-  <!-- Speakers -->
-  <section class="speakers">
-    <h2>Featured Speakers</h2>
-    <div class="speaker-grid">
-      <div class="speaker">
-        <img src="assets/speaker1.jpg" alt="Speaker 1" />
-        <h3>Dr. Marina Blue</h3>
-        <p>Marine Biologist</p>
-      </div>
-      <div class="speaker">
-        <img src="assets/speaker2.jpg" alt="Speaker 2" />
-        <h3>Prof. Coral Reef</h3>
-        <p>Ocean Educator</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Map -->
-  <section class="map">
-    <h2>Explore Conference Venues</h2>
-    <div id="map"></div>
-  </section>
-
-  <!-- Registration -->
-  <section id="register" class="register">
-    <h2>Register & Join</h2>
-    <form>
-      <input type="text" placeholder="Full Name" required />
-      <input type="email" placeholder="Email" required />
-      <button type="submit" class="btn">Submit</button>
-    </form>
-  </section>
-
-  <!-- Contact -->
-  <footer class="contact">
-    <h2>Contact Us</h2>
-    <p>Email: info@oceanliteracyconf.org</p>
-    <p>&copy; 2025 Ocean Literacy Conference</p>
-  </footer>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Map init
-    const map = L.map("map").setView([0,0], 2);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
-
-    // QR code toggle
-    const qrModal = document.getElementById("qrModal");
-    const qr = new QRious({
-      element: document.getElementById("qrCode"),
-      value: "https://yourconferenceurl.com",
-      size: 200
-    });
-
-    function toggleQR() {
-      qrModal.style.display = qrModal.style.display === "none" ? "block" : "none";
-    }
-  </script>
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navMenu = document.querySelector('.nav-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            mobileMenuBtn.innerHTML = navMenu.classList.contains('active') ? 
+                '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Schedule Tabs
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const scheduleContents = document.querySelectorAll('.schedule-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const day = btn.getAttribute('data-day');
+                
+                // Update active tab
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show correct content
+                scheduleContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === day) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+        
+        // Chatbot Toggle
+        const chatbotBtn = document.querySelector('.chatbot-btn');
+        const chatbotWindow = document.querySelector('.chatbot-window');
+        const chatbotClose = document.querySelector('.chatbot-close');
+        
+        chatbotBtn.addEventListener('click', () => {
+            chatbotWindow.style.display = 'flex';
+        });
+        
+        chatbotClose.addEventListener('click', () => {
+            chatbotWindow.style.display = 'none';
+        });
+        
+        // Simple Chatbot Functionality
+        const chatInput = document.querySelector('.chatbot-input input');
+        const chatMessages = document.querySelector('.chatbot-messages');
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        document.querySelector('.chatbot-input button').addEventListener('click', sendMessage);
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message === '') return;
+            
+            // Add user message
+            const userMessageEl = document.createElement('div');
+            userMessageEl.classList.add('message', 'user-message');
+            userMessageEl.textContent = message;
+            chatMessages.appendChild(userMessageEl);
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Bot response (simulated)
+            setTimeout(() => {
+                const botResponse = getBotResponse(message);
+                const botMessageEl = document.createElement('div');
+                botMessageEl.classList.add('message', 'bot-message');
+                botMessageEl.textContent = botResponse;
+                chatMessages.appendChild(botMessageEl);
+                
+                // Scroll to bottom again
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+        }
+        
+        function getBotResponse(message) {
+            const lowerMsg = message.toLowerCase();
+            
+            if (lowerMsg.includes('register') || lowerMsg.includes('registration')) {
+                return "You can register for the conference by clicking on the 'Registration' link in the main menu or visiting: https://oceanliteracy2023.org/register";
+            } else if (lowerMsg.includes('schedule') || lowerMsg.includes('agenda')) {
+                return "The conference schedule is available on our website. You can view it by scrolling to the schedule section or clicking the 'Schedule' link in the menu.";
+            } else if (lowerMsg.includes('speaker') || lowerMsg.includes('presenter')) {
+                return "Information about our keynote speakers and presenters is available in the 'Speakers' section of the website.";
+            } else if (lowerMsg.includes('virtual') || lowerMsg.includes('online')) {
+                return "Virtual participation options are available. When registering, please select the 'Virtual Attendance' option. You'll receive login information prior to the event.";
+            } else if (lowerMsg.includes('contact') || lowerMsg.includes('email')) {
+                return "You can contact our organizing committee at info@oceanliteracy2023.org or call us at +1 (555) 123-4567 during business hours.";
+            } else {
+                return "I'm sorry, I didn't understand that. I can help with information about registration, the schedule, speakers, virtual participation, or how to contact the organizers.";
+            }
+        }
+    </script>
 </body>
 </html>
